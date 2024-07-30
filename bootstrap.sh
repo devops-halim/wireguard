@@ -9,7 +9,7 @@ sudo apt-get update -y
 # Installieren von Ansible
 if ! [ -x "$(command -v ansible)" ]; then
   echo "Ansible wird installiert..."
-  sudo apt-get install -y ansible wget
+  sudo apt-get install -y ansible unzip
 else
   echo "Ansible ist bereits installiert."
 fi
@@ -63,6 +63,5 @@ GITHUB_REPO_URL="https://github.com/devops-halim/wireguard/archive/refs/heads/ma
 REPO_NAME="wireguard"
 wget $GITHUB_REPO_URL -O repo.zip
 unzip repo.zip
-cd $REPO_NAME
 cd ansible
 ansible-playbook -i "localhost," -c local playbook.yml
