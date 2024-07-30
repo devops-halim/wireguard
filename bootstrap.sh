@@ -9,7 +9,7 @@ sudo apt-get update -y
 # Installieren von Ansible
 if ! [ -x "$(command -v ansible)" ]; then
   echo "Ansible wird installiert..."
-  sudo apt-get install -y ansible
+  sudo apt-get install -y ansible wget
 else
   echo "Ansible ist bereits installiert."
 fi
