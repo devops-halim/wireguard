@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  wireguard:
+    image: linuxserver/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - SERVERURL=$SERVER_DOMAIN
+      - SERVERPORT=51820
+      - PEERS=5
+      - PEERDNS=auto
+    volumes:
+      - ./config:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./authelia:/config
+    ports:
+      - 9091:9091
+    restart: unless-stopped
+
+  wireguard-dashboard:
+    image: ngoduykhanh/wireguard-ui
+    container_name: wireguard-ui
+    ports:
+      - "5000:5000"
+    environment:
+      - 'WG_CONF_TEMPLATE_PATH=/app/templates/wg0.conf'
+    volumes:
+      - './data:/app/data'
+      - './config/wg0.conf:/etc/wireguard/wg0.conf'
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped

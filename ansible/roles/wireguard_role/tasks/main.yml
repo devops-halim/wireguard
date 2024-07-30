@@ -1,0 +1,64 @@
+---
+- name: Update APT package index
+  apt:
+    update_cache: yes
+
+- name: Install necessary packages
+  apt:
+    name:
+      - docker.io
+      - docker-compose
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+- name: Enable and start Docker
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Create webroot for certbot
+  file:
+    path: /var/www/certbot
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0755
+
+- name: Copy docker-compose.yml to the server
+  copy:
+    src: ../../docker/docker-compose.yml
+    dest: /srv/docker-compose.yml
+
+- name: Create Authelia config directory
+  file:
+    path: /srv/authelia
+    state: directory
+
+- name: Copy Authelia configuration to the server
+  copy:
+    src: ../../docker/authelia/
+    dest: /srv/authelia/
+
+- name: Create NGINX config directory
+  file:
+    path: /srv/nginx
+    state: directory
+
+- name: Copy NGINX configuration to the server
+  copy:
+    src: ../../docker/nginx/
+    dest: /srv/nginx/
+
+- name: Run Docker Compose
+  command: docker-compose -f /srv/docker-compose.yml up -d
+
+- name: Obtain Let's Encrypt SSL certificate
+  command: >
+    certbot certonly --webroot -w /var/www/certbot
+    -d $SERVER_DOMAIN --non-interactive --agree-tos
+    --email $USER_EMAIL
+
+- name: Restart NGINX container
+  command: docker-compose -f /srv/docker-compose.yml restart nginx

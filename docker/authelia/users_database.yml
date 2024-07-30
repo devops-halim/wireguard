@@ -1,0 +1,5 @@
+users:
+  $USERNAME:
+    password: $USER_PASSWORD_HASH
+    displayname: $USERNAME
+    email: $USER_EMAIL
