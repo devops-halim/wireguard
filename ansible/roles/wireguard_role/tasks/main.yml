@@ -28,7 +28,7 @@
 
 - name: Copy docker-compose.yml to the server
   copy:
-    src: ../../docker/docker-compose.yml
+    src: ../docker/docker-compose.yml
     dest: /srv/docker-compose.yml
 
 - name: Create Authelia config directory
@@ -38,7 +38,7 @@
 
 - name: Copy Authelia configuration to the server
   copy:
-    src: ../../docker/authelia/
+    src: ../docker/authelia/
     dest: /srv/authelia/
 
 - name: Create NGINX config directory
@@ -48,7 +48,7 @@
 
 - name: Copy NGINX configuration to the server
   copy:
-    src: ../../docker/nginx/
+    src: ../docker/nginx/
     dest: /srv/nginx/
 
 - name: Run Docker Compose
