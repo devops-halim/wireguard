@@ -27,7 +27,7 @@ fi
 # Installieren von Docker Compose
 if ! [ -x "$(command -v docker-compose)" ]; then
   echo "Docker Compose wird installiert..."
-  sudo apt-get install -y docker-compose
+  sudo apt-get install -y docker-compose apparmor apparmor-utils
 else
   echo "Docker Compose ist bereits installiert."
 fi
