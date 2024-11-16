@@ -43,8 +43,18 @@ if ! command -v docker-compose &> /dev/null; then
     #sudo chmod +x /usr/local/bin/docker-compose
 fi
 # Benutzer zur Docker-Gruppe hinzufügen
-echo "Füge Benutzer '$new_user' zur Docker-Gruppe hinzu..."
-sudo usermod -aG docker "$new_user"
+# echo "Füge Benutzer '$new_user' zur Docker-Gruppe hinzu..."
+# sudo usermod -aG docker "$new_user"
+
+
+# GitHub URL of the docker-compose.yml file (raw version)
+GITHUB_URL="https://raw.githubusercontent.com/devops-halim/wireguard/refs/heads/main/docker-compose.yml"
+
+# Step 1: Download docker-compose.yml from GitHub
+echo "Downloading docker-compose.yml from GitHub..."
+curl -L "$GITHUB_URL" -o "$LOCAL_FILE"
+
+
 
 # Verzeichnis des Skripts bestimmen
 docker_compose_dir="$(dirname "$(realpath "$0")")"
