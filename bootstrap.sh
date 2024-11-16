@@ -9,12 +9,17 @@ fi
 
 echo "Das Betriebssystem ist kompatibel. Skript wird fortgesetzt."
 
+# Repository aktualisieren
+echo "Aktualisiere Repositories..."
+sudo apt update && sudo apt upgrade -y
+
+
 # Neuen Benutzer erstellen
-new_user="vpn"
-echo "Erstelle Benutzer '$new_user'..."
-sudo useradd -m -s /bin/bash "$new_user"
-sudo passwd "$new_user"
-sudo usermod -aG sudo "$new_user"
+# new_user="vpn"
+# echo "Erstelle Benutzer '$new_user'..."
+# sudo useradd -m -s /bin/bash "$new_user"
+# sudo passwd "$new_user"
+# sudo usermod -aG sudo "$new_user"
 
 sudo su - $new_user
 # Docker und Docker Compose sicherstellen
