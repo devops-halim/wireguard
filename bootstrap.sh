@@ -1,157 +1,52 @@
 #!/bin/bash
 
-# Überprüfen und Installieren von Ansible, Docker und Docker Compose
-echo "Überprüfen und Installieren der benötigten Pakete..."
-
-# Update Paketindex
-sudo apt-get update -y
-
-# Installieren von Ansible
-if ! [ -x "$(command -v ansible)" ]; then
-  echo "Ansible wird installiert..."
-  sudo apt-get install -y ansible unzip
-else
-  echo "Ansible ist bereits installiert."
+# Überprüfen, ob das Betriebssystem Ubuntu oder Debian ist
+os_info=$(cat /etc/os-release)
+if ! echo "$os_info" | grep -qE "ID=(ubuntu|debian)"; then
+    echo "Das Betriebssystem ist weder Ubuntu noch Debian. Skript wird abgebrochen."
+    exit 1
 fi
 
-# Installieren von Docker
-if ! [ -x "$(command -v docker)" ]; then
-  echo "Docker wird installiert..."
-  sudo apt-get install -y docker.io
-  sudo systemctl start docker
-  sudo systemctl enable docker
-else
-  echo "Docker ist bereits installiert."
+echo "Das Betriebssystem ist kompatibel. Skript wird fortgesetzt."
+
+# Neuen Benutzer erstellen
+new_user="vpn"
+echo "Erstelle Benutzer '$new_user'..."
+sudo useradd -m -s /bin/bash "$new_user"
+sudo passwd "$new_user"
+sudo usermod -aG sudo "$new_user"
+
+sudo su - $new_user
+# Docker und Docker Compose sicherstellen
+echo "Stelle sicher, dass Docker und Docker Compose installiert sind..."
+if ! command -v docker &> /dev/null; then
+    echo "Docker ist nicht installiert. Installiere Docker..."
+    sudo apt update
+    sudo apt install -y docker-ce docker-ce-cli containerd.io
 fi
 
-# Installieren von Docker Compose
-if ! [ -x "$(command -v docker-compose)" ]; then
-  echo "Docker Compose wird installiert..."
-  sudo apt-get install -y docker-compose apparmor apparmor-utils
-else
-  echo "Docker Compose ist bereits installiert."
+if ! command -v docker-compose &> /dev/null; then
+    echo "Docker Compose ist nicht installiert. Installiere Docker Compose..."
+    sudo apt install -y docker-compose-plugin
+    #sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    #sudo chmod +x /usr/local/bin/docker-compose
+fi
+# Benutzer zur Docker-Gruppe hinzufügen
+echo "Füge Benutzer '$new_user' zur Docker-Gruppe hinzu..."
+sudo usermod -aG docker "$new_user"
+
+# Verzeichnis des Skripts bestimmen
+docker_compose_dir="$(dirname "$(realpath "$0")")"
+
+# Überprüfen, ob docker-compose.yml existiert
+if [ ! -f "$docker_compose_dir/docker-compose.yml" ]; then
+    echo "Die Datei docker-compose.yml wurde im Verzeichnis $docker_compose_dir nicht gefunden!"
+    exit 1
 fi
 
-# Installieren von Certbot und Plugin für Nginx
-if ! [ -x "$(command -v certbot)" ]; then
-  echo "Certbot wird installiert..."
-  sudo apt-get install -y certbot python3-certbot-nginx
-else
-  echo "Certbot ist bereits installiert."
-fi
+# Docker Compose starten
+echo "Starte Docker Compose im Verzeichnis $docker_compose_dir..."
+cd "$docker_compose_dir" || exit
+docker compose up -d
 
-# Benutzer nach Eingaben fragen
-read -p "Geben Sie Ihre DNS-Domain ein (z.B., example.com): " SERVER_DOMAIN
-read -p "Geben Sie Ihr JWT-Secret ein: " JWT_SECRET
-read -p "Geben Sie Ihren Benutzernamen für Authelia ein: " USERNAME
-read -p "Geben Sie Ihre E-Mail für Authelia ein: " USER_EMAIL
-read -sp "Geben Sie Ihr Passwort für Authelia ein: " USER_PASSWORD
-echo
-
-# Passwort hash erstellen
-USER_PASSWORD_HASH=$(echo -n $USER_PASSWORD | htpasswd -ni $USERNAME)
-
-# Arbeitsverzeichnis erstellen
-WORK_DIR="/opt/wireguard-setup"
-mkdir -p $WORK_DIR
-cd $WORK_DIR
-
-# Repository herunterladen und extrahieren
-GITHUB_REPO_URL="https://github.com/devops-halim/wireguard/archive/refs/heads/main.zip"
-wget $GITHUB_REPO_URL -O repo.zip
-unzip repo.zip
-mv wireguard-main/* ./
-rm -rf wireguard-main repo.zip
-
-# Umgebungsvariablen in Konfigurationsdateien einfügen
-# Docker Compose Datei bearbeiten
-sed -i "s/\$SERVER_DOMAIN/$SERVER_DOMAIN/g" docker/docker-compose.yml
-
-# Authelia Konfigurationsdatei bearbeiten
-sed -i "s/\$SERVER_DOMAIN/$SERVER_DOMAIN/g" docker/authelia/configuration.yml
-sed -i "s/\$JWT_SECRET/$JWT_SECRET/g" docker/authelia/configuration.yml
-
-# Authelia Benutzerdatenbank bearbeiten
-sed -i "s/\$USERNAME/$USERNAME/g" docker/authelia/users_database.yml
-sed -i "s/\$USER_PASSWORD_HASH/$USER_PASSWORD_HASH/g" docker/authelia/users_database.yml
-sed -i "s/\$USER_EMAIL/$USER_EMAIL/g" docker/authelia/users_database.yml
-
-# NGINX Konfigurationsdatei bearbeiten
-sed -i "s/\$SERVER_DOMAIN/$SERVER_DOMAIN/g" docker/nginx/default.conf
-
-# Ansible-Playbook ausführen
-cd ansible
-ansible-playbook -i "localhost," -c local playbook.yml
-
-
-
-
-
-
-# #!/bin/bash
-
-# # Überprüfen und Installieren von Ansible, Docker und Docker Compose
-# echo "Überprüfen und Installieren der benötigten Pakete..."
-
-# # Update Paketindex
-# sudo apt-get update -y
-
-# # Installieren von Ansible
-# if ! [ -x "$(command -v ansible)" ]; then
-#   echo "Ansible wird installiert..."
-#   sudo apt-get install -y ansible unzip
-# else
-#   echo "Ansible ist bereits installiert."
-# fi
-
-# # Installieren von Docker
-# if ! [ -x "$(command -v docker)" ]; then
-#   echo "Docker wird installiert..."
-#   sudo apt-get install -y docker.io
-#   sudo systemctl start docker
-#   sudo systemctl enable docker
-# else
-#   echo "Docker ist bereits installiert."
-# fi
-
-# # Installieren von Docker Compose
-# if ! [ -x "$(command -v docker-compose)" ]; then
-#   echo "Docker Compose wird installiert..."
-#   sudo apt-get install -y docker-compose
-# else
-#   echo "Docker Compose ist bereits installiert."
-# fi
-
-# # Installieren von Certbot und Plugin für Nginx
-# if ! [ -x "$(command -v certbot)" ]; then
-#   echo "Certbot wird installiert..."
-#   sudo apt-get install -y certbot python3-certbot-nginx
-# else
-#   echo "Certbot ist bereits installiert."
-# fi
-
-# # Benutzer nach Eingaben fragen
-# read -p "Geben Sie Ihre DNS-Domain ein (z.B., example.com): " SERVER_DOMAIN
-# read -p "Geben Sie Ihr JWT-Secret ein: " JWT_SECRET
-# read -p "Geben Sie Ihren Benutzernamen für Authelia ein: " USERNAME
-# read -p "Geben Sie Ihre E-Mail für Authelia ein: " USER_EMAIL
-# read -sp "Geben Sie Ihr Passwort für Authelia ein: " USER_PASSWORD
-# echo
-
-# # Passwort hash erstellen
-# USER_PASSWORD_HASH=$(echo -n $USER_PASSWORD | htpasswd -ni $USERNAME)
-
-# # Arbeitsverzeichnis erstellen
-# mkdir -p /opt/wireguard-setup/ansible/roles/wireguard_role/tasks
-# mkdir -p /opt/wireguard-setup/docker/authelia
-# mkdir -p /opt/wireguard-setup/docker/nginx
-
-# cd /opt/wireguard-setup
-
-# # Repository herunterladen und extrahieren
-# GITHUB_REPO_URL="https://github.com/devops-halim/wireguard/archive/refs/heads/main.zip"
-# REPO_NAME="wireguard"
-# wget $GITHUB_REPO_URL -O repo.zip
-# unzip repo.zip
-# cd ansible
-# ansible-playbook -i "localhost," -c local playbook.yml
+echo "Docker Compose wurde erfolgreich gestartet!"
