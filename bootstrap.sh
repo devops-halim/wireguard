@@ -69,4 +69,8 @@ echo "Starte Docker Compose im Verzeichnis $docker_compose_dir..."
 cd "$docker_compose_dir" || exit
 docker compose up -d
 
+# show peer QR-cod
+sudo docker exec -it wireguard  /app/show-peer 1
+sudo docker exec -it wireguard wg
+
 echo "Docker Compose wurde erfolgreich gestartet!"
