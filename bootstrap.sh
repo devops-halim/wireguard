@@ -52,8 +52,7 @@ GITHUB_URL="https://raw.githubusercontent.com/devops-halim/wireguard/refs/heads/
 
 # Step 1: Download docker-compose.yml from GitHub
 echo "Downloading docker-compose.yml from GitHub..."
-#curl -L "$GITHUB_URL" -o "$LOCAL_FILE"
-curl -L "$GITHUB_URL"
+curl -L "$GITHUB_URL" -o "docker-compose.yml"
 
 
 # Verzeichnis des Skripts bestimmen
